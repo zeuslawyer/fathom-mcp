@@ -2,18 +2,27 @@
   "name": "fathom-mcp",
   "version": "0.0.1",
   "description": "MCP server for Fathom AI",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "tsc --noEmit",
     "build": "tsc",
-    "dev": "pnpm build && tsx src/index.ts"
+    "dev": "pnpm build && tsx src/index.ts",
+    "lint": "eslint .",
+    "fmt": "prettier --write ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.15.1",
   "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.0",
+    "@typescript-eslint/parser": "^8.46.0",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   },
