@@ -1,11 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Fathom } from "fathom-typescript";
+import { z } from "zod";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 function init() {
+  const packageJson = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
+  const VERSION = packageJson.version;
+
   const server = new McpServer({
     name: "fathom-mcp",
-    version: "0.0.1",
+    version: VERSION,
+    logging: true,
   });
 
   const fathom = new Fathom({
@@ -19,8 +26,9 @@ function init() {
 
 async function main() {
   const { server, fathom } = init();
+  const noInput = {};
 
-  server.tool("fathom-list-meetings", "List all Fathom meetings", {}, async () => {
+  server.tool("fathom_list_meetings", "List all Fathom meetings", noInput, async () => {
     try {
       const meetings = await fathom.listMeetings({});
       return {
@@ -35,6 +43,34 @@ async function main() {
       };
     }
   });
+
+  server.tool(
+    "fathom_get_summary",
+    "given the recording id, returns the meeting summary from Fathom AI, with a timeout of 15 seconds",
+    { recordingId: z.number().describe("The fathom recording id") },
+    async args => {
+      try {
+        const summary = await fathom.getRecordingSummary(
+          {
+            recordingId: args.recordingId,
+          },
+          {
+            timeoutMs: 15000,
+          }
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(summary) }],
+          // structuredContent: summary,
+        };
+      } catch (error) {
+        console.error("Error fetching meeting summary:", error);
+        return {
+          content: [{ type: "text", text: `Error fetching summary: ${error}` }],
+          isError: true,
+        };
+      }
+    }
+  );
 
   const stdioTransport = new StdioServerTransport();
   await server.connect(stdioTransport);
