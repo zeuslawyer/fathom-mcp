@@ -1,0 +1,27 @@
+{
+  "name": "fathom-mcp",
+  "version": "0.0.1",
+  "description": "MCP server for Fathom AI",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc --noEmit",
+    "build": "tsc",
+    "dev": "pnpm build && tsx src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.1",
+  "devDependencies": {
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@types/node": "^24.7.0",
+    "dotenv": "^17.2.3",
+    "fathom-typescript": "^0.0.35",
+    "zod": "^4.1.12"
+  }
+}
