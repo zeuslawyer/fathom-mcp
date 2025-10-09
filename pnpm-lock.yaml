@@ -1954,8 +1954,8 @@ snapshots:
     dependencies:
       undici-types: 7.14.0
 
-  "@typescript-eslint/eslint-plugin@8.46.0(@typescript-eslint/parser@8.46.0(eslint@9.37.0)(typescript@5.9.3))(eslint@9.37.0)(typescript@5.9.3)":
-    dependencies:
+  ? "@typescript-eslint/eslint-plugin@8.46.0(@typescript-eslint/parser@8.46.0(eslint@9.37.0)(typescript@5.9.3))(eslint@9.37.0)(typescript@5.9.3)"
+  : dependencies:
       "@eslint-community/regexpp": 4.12.1
       "@typescript-eslint/parser": 8.46.0(eslint@9.37.0)(typescript@5.9.3)
       "@typescript-eslint/scope-manager": 8.46.0

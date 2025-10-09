@@ -3,12 +3,10 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { Fathom } from "fathom-typescript";
 import { z } from "zod";
 import { readFileSync } from "fs";
-import { join } from "path";
 
 function init() {
-  const packageJson = JSON.parse(
-    readFileSync(join(__dirname, "..", "package.json"), "utf8")
-  );
+  const packageJsonPath = new URL("../package.json", import.meta.url);
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
   const VERSION = packageJson.version;
 
   const server = new McpServer({
