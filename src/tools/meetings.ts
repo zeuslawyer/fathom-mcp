@@ -28,7 +28,7 @@ export async function fetchAllMeetings(
         cursor: cursor,
         includeSummary,
         includeTranscript,
-      })
+      });
       allMeetings = [...allMeetings, ...response.result.items];
       cursor = response.result.nextCursor;
       hasMorePages = !!cursor;
@@ -50,7 +50,6 @@ export async function fetchAllMeetings(
  * 3. fathom_get_transcript - Get full transcript for a specific meeting
  */
 export function registerMeetingTools(server: McpServer, fathom: Fathom) {
-
   // Search meetings tool - primary tool for finding meetings
   server.tool(
     "search_meetings",
@@ -59,19 +58,27 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
       participantKeywords: z
         .array(z.string())
         .optional()
-        .describe("Keywords to match against participant names/emails (e.g., ['John', 'smith@example.com'])"),
+        .describe(
+          "Keywords to match against participant names/emails (e.g., ['John', 'smith@example.com'])"
+        ),
       titleKeywords: z
         .array(z.string())
         .optional()
-        .describe("Keywords to match against meeting titles or descriptions (e.g., ['standup', 'planning'])"),
+        .describe(
+          "Keywords to match against meeting titles or descriptions (e.g., ['standup', 'planning'])"
+        ),
       startDate: z
         .string()
         .optional()
-        .describe("Filter meetings on or after this date (ISO format: YYYY-MM-DD or natural language that the AI can parse)"),
+        .describe(
+          "Filter meetings on or after this date (ISO format: YYYY-MM-DD or natural language that the AI can parse)"
+        ),
       endDate: z
         .string()
         .optional()
-        .describe("Filter meetings on or before this date (ISO format: YYYY-MM-DD or natural language that the AI can parse)"),
+        .describe(
+          "Filter meetings on or before this date (ISO format: YYYY-MM-DD or natural language that the AI can parse)"
+        ),
     },
     async (args) => {
       try {
@@ -79,7 +86,7 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
         const { meetings: allMeetings, hadError } = await fetchAllMeetings(
           fathom,
           false, // Don't fetch summaries
-          false  // Don't fetch transcripts
+          false // Don't fetch transcripts
         );
 
         const filteredMeetings = allMeetings.filter((meeting) => {
@@ -152,7 +159,9 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
             minute: "2-digit",
           }),
           durationMinutes: Math.round(
-            (m.scheduledEndTime?.getTime() - m.scheduledStartTime?.getTime()) / 1000 / 60
+            (m.scheduledEndTime?.getTime() - m.scheduledStartTime?.getTime()) /
+              1000 /
+              60
           ),
           url: m.url,
           shareUrl: m.shareUrl,
@@ -164,20 +173,24 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
 
         let elicitationPrompt = "";
         if (ENABLE_ELICITATION && formattedMeetings.length > 0) {
-          elicitationPrompt = "\n\nWould you like a summary or full transcript for any of these meetings? If so, please provide the recordingId.";
+          elicitationPrompt =
+            "\n\nWould you like a summary or full transcript for any of these meetings? If so, please provide the recordingId.";
         }
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(formattedMeetings, null, 2) + elicitationPrompt,
+              text:
+                JSON.stringify(formattedMeetings, null, 2) + elicitationPrompt,
             },
           ],
           structuredContent: {
             meetings: formattedMeetings,
             count: formattedMeetings.length,
-            elicitationPrompt: ENABLE_ELICITATION ? elicitationPrompt : undefined
+            elicitationPrompt: ENABLE_ELICITATION
+              ? elicitationPrompt
+              : undefined,
           },
           isError: hadError,
         };
@@ -200,7 +213,11 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
   server.tool(
     "fathom_get_summary",
     "Given a recording ID from search_meetings, fetch the AI-generated summary of that meeting. Use this when the user wants a concise overview of meeting content.",
-    { recordingId: z.number().describe("The Fathom recording ID from search_meetings") },
+    {
+      recordingId: z
+        .number()
+        .describe("The Fathom recording ID from search_meetings"),
+    },
     async (args) => {
       try {
         const summary = await fathom.getRecordingSummary(
@@ -236,7 +253,11 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
   server.tool(
     "fathom_get_transcript",
     "Given a recording ID from search_meetings, fetch the complete transcript with speaker names and timestamps. Use this when the user needs the full verbatim conversation details.",
-    { recordingId: z.number().describe("The Fathom recording ID from search_meetings") },
+    {
+      recordingId: z
+        .number()
+        .describe("The Fathom recording ID from search_meetings"),
+    },
     async (args) => {
       try {
         // TODO(@zeuslawyer): Replace raw HTTP with SDK once fathom-typescript fixes the bug
@@ -247,10 +268,10 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
         const url = `https://api.fathom.ai/external/v1/recordings/${args.recordingId}/transcript`;
 
         const response = await fetch(url, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'X-Api-Key': apiKey || '',
-            'Accept': 'application/json',
+            "X-Api-Key": apiKey || "",
+            Accept: "application/json",
           },
         });
 
@@ -258,10 +279,15 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json() as any;
+        const data = (await response.json()) as any;
 
         // Check if response has transcript property
-        if (data && typeof data === 'object' && 'transcript' in data && Array.isArray(data.transcript)) {
+        if (
+          data &&
+          typeof data === "object" &&
+          "transcript" in data &&
+          Array.isArray(data.transcript)
+        ) {
           // Format transcript for better readability
           const formattedTranscript = data.transcript.map((item: any) => ({
             speaker: item.speaker?.name || "Unknown Speaker",

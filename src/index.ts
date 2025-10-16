@@ -26,10 +26,9 @@ function init() {
   return { server, fathom };
 }
 
-
 async function main() {
   const { server, fathom } = init();
-  
+
   // Register all tools
   registerTools(server, fathom);
 
