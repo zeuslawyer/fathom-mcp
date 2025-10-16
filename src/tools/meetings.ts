@@ -231,23 +231,39 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
   );
 
   // Get transcript tool
+  // NOTE: The Fathom TypeScript SDK has a bug where destinationUrl is marked as required
+  // but the API documentation says it's optional. We work around this by making a raw HTTP request.
   server.tool(
     "fathom_get_transcript",
     "Given a recording ID from search_meetings, fetch the complete transcript with speaker names and timestamps. Use this when the user needs the full verbatim conversation details.",
     { recordingId: z.number().describe("The Fathom recording ID from search_meetings") },
     async (args) => {
       try {
-        // The SDK requires destinationUrl, but we want immediate response
-        // Using empty string as a workaround to get direct response
-        const response = await fathom.getRecordingTranscript({
-          recordingId: args.recordingId,
-          destinationUrl: "", // Empty string for direct response
+        // TODO(@zeuslawyer): Replace raw HTTP with SDK once fathom-typescript fixes the bug
+        // The SDK should allow: await fathom.getRecordingTranscript({ recordingId: args.recordingId })
+        // without requiring destinationUrl parameter
+        // Direct HTTP request to avoid SDK bug with required destinationUrl
+        const apiKey = process.env.FATHOM_API_KEY;
+        const url = `https://api.fathom.ai/external/v1/recordings/${args.recordingId}/transcript`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'X-Api-Key': apiKey || '',
+            'Accept': 'application/json',
+          },
         });
 
-        // Check if response exists and has transcript property (direct response type)
-        if (response && 'transcript' in response && response.transcript) {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json() as any;
+
+        // Check if response has transcript property
+        if (data && typeof data === 'object' && 'transcript' in data && Array.isArray(data.transcript)) {
           // Format transcript for better readability
-          const formattedTranscript = response.transcript.map((item: any) => ({
+          const formattedTranscript = data.transcript.map((item: any) => ({
             speaker: item.speaker?.name || "Unknown Speaker",
             speakerEmail: item.speaker?.email,
             text: item.text,
@@ -268,15 +284,15 @@ export function registerMeetingTools(server: McpServer, fathom: Fathom) {
             },
           };
         } else {
-          // Callback response type
+          // Unexpected response format
           return {
             content: [
               {
                 type: "text",
-                text: "Transcript requested via callback. Response: " + JSON.stringify(response),
+                text: "Unexpected response format: " + JSON.stringify(data),
               },
             ],
-            isError: false,
+            isError: true,
           };
         }
       } catch (error) {
