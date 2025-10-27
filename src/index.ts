@@ -1,14 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { Fathom } from "fathom-typescript";
 import { readFileSync } from "fs";
 import { registerTools } from "./tools/index.js";
 
-function init() {
-  const packageJsonPath = new URL("../package.json", import.meta.url);
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-  const VERSION = packageJson.version;
+const packageJsonPath = new URL("../package.json", import.meta.url);
+const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+const VERSION = packageJson.version;
 
+function init() {
   const server = new McpServer({
     name: "fathom-mcp",
     description:
@@ -17,24 +16,18 @@ function init() {
     logging: true,
   });
 
-  const fathom = new Fathom({
-    security: {
-      apiKeyAuth: process.env.FATHOM_API_KEY,
-    },
-  });
-
-  return { server, fathom };
+  return { server };
 }
 
 async function main() {
-  const { server, fathom } = init();
+  const { server } = init();
 
   // Register all tools
-  registerTools(server, fathom);
+  registerTools(server);
 
   const stdioTransport = new StdioServerTransport();
   await server.connect(stdioTransport);
-  console.error(`🟢Server connected\n`);
+  console.error(`🟢Fathom MCP Server (version: ${VERSION}) connected\n`);
 }
 
 main().catch((error) => {
