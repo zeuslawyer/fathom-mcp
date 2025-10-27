@@ -2,24 +2,24 @@ import { Fathom } from "fathom-typescript";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-const fathom = new Fathom({
-  security: {
-    apiKeyAuth: process.env.FATHOM_API_KEY,
-  },
-});
+export function createFathomInstance() {
+  return new Fathom({
+    security: {
+      apiKeyAuth: process.env.FATHOM_API_KEY,
+    },
+  });
+}
 
 /**
  * Fetches all meetings from Fathom API with pagination handling.
  * This utility function iterates through all pages to retrieve complete meeting data.
- *
- * @param includeSummary - Whether to include AI-generated summaries (increases response size)
- * @param includeTranscript - Whether to include full transcripts (significantly increases response size)
- * @returns Object containing all meetings array and error status
  */
 export async function fetchAllMeetings(
   includeSummary = false,
-  includeTranscript = false
+  includeTranscript = false,
+  fathomInstance?: Fathom
 ) {
+  const fathom = fathomInstance || createFathomInstance();
   let allMeetings: any[] = [];
   let cursor: any = "";
   let hasMorePages = true;
@@ -48,12 +48,12 @@ export async function fetchAllMeetings(
 
 /**
  * Registers all Fathom meeting-related MCP tools.
- * Three main tools:
- * 1. search_meetings - Find meetings by keywords, participants, and date range
- * 2. fathom_get_summary - Get AI summary for a specific meeting
- * 3. fathom_get_transcript - Get full transcript for a specific meeting
  */
-export function registerMeetingTools(server: McpServer) {
+export function registerMeetingTools(
+  server: McpServer,
+  fathomInstance?: Fathom
+) {
+  const fathom = fathomInstance || createFathomInstance();
   // Search meetings tool - primary tool for finding meetings
   server.tool(
     "search_meetings",
@@ -89,7 +89,8 @@ export function registerMeetingTools(server: McpServer) {
         // Fetch all meetings (metadata only - no summary/transcript to minimize context)
         const { meetings: allMeetings, hadError } = await fetchAllMeetings(
           false, // Don't fetch summaries
-          false // Don't fetch transcripts
+          false, // Don't fetch transcripts
+          fathom
         );
 
         const filteredMeetings = allMeetings.filter((meeting) => {
